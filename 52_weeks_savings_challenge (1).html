@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f43f5e">
+    <title>52 Weeks Savings Challenge PRO</title>
+    
+    <!-- PWA Manifest & Web App Headers -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%2252%20Weeks%20Savings%20Challenge%20PRO%22%2C%22short_name%22%3A%22Savings%20PRO%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23fff1f2%22%2C%22theme_color%22%3A%22%23f43f5e%22%7D">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Savings Challenge">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'highlight': 'highlight 1.5s ease-in-out infinite',
+                        'bounce-short': 'bounceShort 0.5s ease-in-out 2',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        highlight: {
+                            '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(244, 63, 94, 0.7)' },
+                            '50%': { transform: 'scale(1.03)', boxShadow: '0 0 0 12px rgba(244, 63, 94, 0)' },
+                        },
+                        bounceShort: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '0.8' },
+                            '50%': { opacity: '1', filter: 'drop-shadow(0 0 15px rgba(244,63,94,0.6))' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #f43f5e; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e11d48; }
+        
+        html { scroll-behavior: smooth; }
+        
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] { -moz-appearance: textfield; }
+
+        /* Glassmorphism utilities */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Canvas overlay for confetti */
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-rose-50 via-pink-50 to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-rose-950 min-h-screen text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-rose-400 selection:text-white pb-16 transition-colors duration-300">
+
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Offline Banner -->
+    <div id="offlineBanner" class="hidden bg-slate-900 text-white dark:bg-rose-950 text-xs sm:text-sm py-2 px-4 text-center font-medium sticky top-0 z-50 border-b border-rose-500/30">
+        ⚡ You are currently offline. Your progress is saved locally in your browser!
+    </div>
+
+    <!-- Dynamic Modal -->
+    <div id="customModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md px-4 transition-all duration-300">
+        <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 transform transition-all duration-300 scale-95 opacity-0">
+            <div id="modalHeaderIcon" class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-2xl mb-4 font-bold">
+                💡
+            </div>
+            <h3 id="modalTitle" class="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-slate-100 mb-2">Notice</h3>
+            <p id="modalMessage" class="text-slate-600 dark:text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">Message content goes here.</p>
+            
+            <div id="modalExtraContent" class="mb-4 hidden"></div>
+
+            <div class="flex flex-wrap sm:flex-nowrap justify-end gap-3">
+                <button id="modalCancelBtn" onclick="closeModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors hidden">
+                    Cancel
+                </button>
+                <button id="modalConfirmBtn" onclick="handleModalConfirm()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold shadow-lg shadow-rose-500/30 hover:from-rose-600 hover:to-pink-600 active:scale-95 transition-all">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10">
+        
+        <!-- Top Toolbar / Navigation Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">💰</span>
+                <span class="font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-600 text-lg sm:text-xl tracking-tight">SaverPRO</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Sound FX Toggle -->
+                <button onclick="toggleAudio()" id="audioToggleBtn" title="Toggle Sound FX" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-200 transition-colors font-medium text-sm flex items-center gap-1.5">
+                    <span id="audioIcon">🔊</span>
+                    <span class="hidden sm:inline text-xs font-bold">Sound</span>
+                </button>
+
+                <!-- Currency Selector -->
+                <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-2.5 py-1.5 border border-slate-200 dark:border-slate-700">
+                    <span class="text-xs font-bold text-slate-400 mr-1.5 uppercase">Currency:</span>
+                    <select id="currencySelector" onchange="changeCurrency(this.value)" class="bg-transparent text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer">
+                        <option value="PHP">₱ PHP</option>
+                        <option value="USD">$ USD</option>
+                        <option value="EUR">€ EUR</option>
+                        <option value="GBP">£ GBP</option>
+                        <option value="INR">₹ INR</option>
+                        <option value="JPY">¥ JPY</option>
+                        <option value="CAD">C$ CAD</option>
+                        <option value="AUD">A$ AUD</option>
+                        <option value="BRL">R$ BRL</option>
+                    </select>
+                </div>
+
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" title="Toggle Dark/Light Mode" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-200 transition-colors">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- App Header Banner -->
+        <header class="relative text-center bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 text-white p-8 sm:p-12 rounded-[2.5rem] shadow-2xl shadow-rose-500/20 mb-8 overflow-hidden">
+            <div class="absolute inset-0 bg-white/10 opacity-30 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+            <div class="relative z-10 max-w-3xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs sm:text-sm font-bold tracking-wide uppercase mb-4 text-rose-100 shadow-sm">
+                    ✨ 52-Week Wealth Building Journey
+                </div>
+                <h1 class="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-3 drop-shadow-md">
+                    52 Weeks Savings Challenge
+                </h1>
+                <p class="text-rose-100 text-base sm:text-xl font-medium leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
+                    Build financial discipline week by week. Track your progress, unlock milestones, and master your savings goal!
+                </p>
+
+                <!-- Motivation Quote -->
+                <div class="mt-6 inline-block bg-black/20 backdrop-blur-md px-5 py-2.5 rounded-2xl text-xs sm:text-sm italic font-medium text-pink-100 border border-white/10">
+                    <span id="quoteText">"Do not save what is left after spending, but spend what is left after saving."</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Dashboard -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-8">
+            <div class="glass-card rounded-3xl p-5 sm:p-6 text-center border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all hover:-translate-y-1">
+                <div class="w-10 h-10 mx-auto mb-2 rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-500 flex items-center justify-center text-xl font-bold">
+                    💵
+                </div>
+                <span class="block text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1">Total Saved</span>
+                <strong id="totalSaved" class="text-xl sm:text-3xl font-black text-rose-500 dark:text-rose-400">₱0.00</strong>
+            </div>
+
+            <!-- Editable Total Goal Card -->
+            <div class="glass-card rounded-3xl p-5 sm:p-6 text-center border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all hover:-translate-y-1">
+                <div class="w-10 h-10 mx-auto mb-2 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-500 flex items-center justify-center text-xl font-bold">
+                    🎯
+                </div>
+                <div class="flex items-center justify-center gap-1 mb-1">
+                    <span class="block text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Total Goal</span>
+                    <button onclick="promptEditGoal()" title="Edit Target Goal" class="text-xs hover:scale-125 transition-transform">✏️</button>
+                </div>
+                <div class="flex items-center justify-center bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl px-2 py-0.5 focus-within:ring-2 focus-within:ring-amber-400 transition-all">
+                    <span class="currencySymbol font-black text-amber-600 dark:text-amber-400 text-sm sm:text-lg mr-1">₱</span>
+                    <input id="totalGoalInput" type="number" min="1" step="10" onchange="handleGoalChange(this.value)" class="w-full bg-transparent text-lg sm:text-2xl font-black text-slate-800 dark:text-slate-100 text-center outline-none" title="Click or edit total goal amount">
+                </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-5 sm:p-6 text-center border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all hover:-translate-y-1">
+                <div class="w-10 h-10 mx-auto mb-2 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-500 flex items-center justify-center text-xl font-bold">
+                    ⏳
+                </div>
+                <span class="block text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1">Remaining</span>
+                <strong id="totalRemaining" class="text-xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">₱0.00</strong>
+            </div>
+
+            <div class="glass-card rounded-3xl p-5 sm:p-6 text-center border border-slate-200/80 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all hover:-translate-y-1">
+                <div class="w-10 h-10 mx-auto mb-2 rounded-2xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-500 flex items-center justify-center text-xl font-bold">
+                    🏆
+                </div>
+                <span class="block text-xs sm:text-sm font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1">Weeks Done</span>
+                <strong id="completed" class="text-xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400">0 / 52</strong>
+            </div>
+        </div>
+
+        <!-- Progress Bar & Milestone Badges -->
+        <div class="glass-card p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-800 mb-8">
+            <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                <div>
+                    <span class="font-extrabold text-slate-800 dark:text-slate-100 text-lg sm:text-xl flex items-center gap-2">
+                        <span class="text-rose-500 text-2xl">📈</span> Overall Progress
+                    </span>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5">Track your step towards full financial completion</p>
+                </div>
+                <div class="text-right">
+                    <span id="percentage" class="font-black text-rose-500 dark:text-rose-400 text-2xl sm:text-3xl tracking-tight">0%</span>
+                </div>
+            </div>
+
+            <!-- Visual Bar -->
+            <div class="h-6 bg-rose-100 dark:bg-slate-800 rounded-full overflow-hidden p-1 shadow-inner relative">
+                <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-rose-500 via-pink-500 to-amber-400 transition-all duration-700 ease-out rounded-full relative shadow-md">
+                    <div class="absolute inset-0 bg-white/20 opacity-60 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.3)_25%,rgba(255,255,255,0.3)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.3)_75%,rgba(255,255,255,0.3)_100%)] bg-[length:20px_20px]"></div>
+                </div>
+            </div>
+
+            <!-- Milestone Badges Bar -->
+            <div class="mt-6 pt-6 border-t border-slate-200/60 dark:border-slate-800">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-slate-400 block mb-3">Milestone Achievements</span>
+                <div id="milestonesContainer" class="flex flex-wrap gap-2 sm:gap-3">
+                    <!-- Dynamic Badges -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Draw Envelope Section -->
+        <div class="max-w-2xl mx-auto text-center mb-10">
+            <button onclick="drawEnvelope()" class="w-full relative group overflow-hidden bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 text-white font-black text-lg sm:text-2xl py-5 sm:py-6 px-8 rounded-3xl shadow-xl shadow-rose-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <div class="absolute inset-0 w-full h-full bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
+                <span class="flex items-center justify-center gap-3">
+                    <span class="text-2xl sm:text-3xl animate-bounce">🎁</span> DRAW A RANDOM WEEK
+                </span>
+            </button>
+
+            <!-- Draw Result Card -->
+            <div id="drawResult" class="hidden mt-6 glass-card border-2 border-rose-400 dark:border-rose-500/60 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-rose-500/20 transform scale-95 opacity-0 transition-all duration-500">
+                <!-- Dynamic Content via JS -->
+            </div>
+        </div>
+
+        <!-- Controls & Strategy Configuration Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+            
+            <!-- Recalculation & Strategy Presets -->
+            <div class="lg:col-span-6 glass-card p-6 rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between gap-4">
+                <div>
+                    <h3 class="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+                        <span>⚙️</span> Strategy Presets & Increments
+                    </h3>
+                    <p class="text-xs text-slate-400 font-medium">Choose how you want your 52 weeks structured</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Calculation Strategy</label>
+                        <select id="strategyType" onchange="handleStrategyChange()" class="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-rose-400">
+                            <option value="linear">Standard (Step x Week Number)</option>
+                            <option value="flat">Flat Fixed (Same Amount Every Week)</option>
+                            <option value="reverse">Reverse (Highest Amount First)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Step Amount (<span class="currencySymbol">₱</span>)</label>
+                        <div class="flex gap-2">
+                            <input id="stepIncrement" type="number" min="1" step="10" value="100" class="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-center font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-rose-400 text-sm">
+                            <button onclick="regenerateAmounts()" class="bg-slate-800 dark:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 active:scale-95 transition-all text-xs whitespace-nowrap shadow-md">
+                                Recalculate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Action Controls -->
+            <div class="lg:col-span-6 glass-card p-6 rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between gap-4">
+                <div>
+                    <h3 class="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+                        <span>🛠️</span> Actions & Data Tools
+                    </h3>
+                    <p class="text-xs text-slate-400 font-medium">Backup, restore, save or start over</p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <button onclick="saveProgress()" class="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold py-2.5 px-3 rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-md shadow-rose-500/20 text-xs flex items-center justify-center gap-1.5">
+                        💾 Save
+                    </button>
+                    <button onclick="exportData()" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold py-2.5 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950 transition-all text-xs flex items-center justify-center gap-1.5">
+                        📤 Backup
+                    </button>
+                    <button onclick="importData()" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold py-2.5 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950 transition-all text-xs flex items-center justify-center gap-1.5">
+                        📥 Restore
+                    </button>
+                    <button onclick="resetChallenge()" class="bg-slate-100 dark:bg-slate-800 text-rose-500 dark:text-rose-400 border border-slate-200 dark:border-slate-700 font-bold py-2.5 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950 transition-all text-xs flex items-center justify-center gap-1.5">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs & Search Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <!-- Filter Tabs -->
+            <div class="flex items-center bg-slate-200/60 dark:bg-slate-800/80 p-1 rounded-2xl">
+                <button onclick="setFilter('all')" id="filter-all" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white dark:bg-slate-900 text-rose-500 shadow-sm">
+                    All (52)
+                </button>
+                <button onclick="setFilter('saved')" id="filter-saved" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all">
+                    Saved
+                </button>
+                <button onclick="setFilter('pending')" id="filter-pending" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all">
+                    Remaining
+                </button>
+            </div>
+
+            <!-- Search Input -->
+            <div class="flex-1 min-w-[200px] max-w-xs relative">
+                <input id="searchInput" type="text" oninput="renderWeeks()" placeholder="Search week # or amount..." class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-rose-400">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            </div>
+        </div>
+
+        <!-- Weeks Grid -->
+        <div id="weeks" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5 mb-12">
+            <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-slate-400 dark:text-slate-500 font-medium pb-8 text-xs sm:text-sm">
+            <p class="mb-1">💗 52 Weeks Savings Challenge PRO &copy; <span id="year"></span></p>
+            <p>Your data is stored locally on your device for total privacy and offline access.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // -------------------------------------------------------------
+        // WEB AUDIO SYNTHESIZER FOR SOUND EFFECTS
+        // -------------------------------------------------------------
+        let audioEnabled = true;
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audioIcon').textContent = audioEnabled ? '🔊' : '🔇';
+            showModal("Sound FX", audioEnabled ? "Sound effects enabled!" : "Sound effects muted.");
+        }
+
+        function playChime(type = 'click') {
+            if (!audioEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+
+                if (type === 'save') {
+                    // Success chord
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.15); // E5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.3); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                    osc.start(now);
+                    osc.stop(now + 0.45);
+                } else if (type === 'complete') {
+                    // Fanfare chime
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
+                    osc.frequency.setValueAtTime(880, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else {
+                    // Click pop
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                }
+            } catch (e) {
+                console.log("Audio FX error:", e);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // CONFETTI CANVAS ENGINE
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function triggerConfetti() {
+            particles = [];
+            const colors = ['#f43f5e', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
+            for (let i = 0; i < 90; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.7) * 14,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 100,
+                    rotation: Math.random() * 360,
+                    rSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            if (particles.length === 0) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2; // gravity
+                p.life -= 1.2;
+                p.rotation += p.rSpeed;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, p.life / 100);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+
+            if (particles.length > 0) {
+                requestAnimationFrame(animateConfetti);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // APPLICATION STATE & STORAGE
+        // -------------------------------------------------------------
+        const STORAGE_KEY = "SaverPro_52WeeksData_v2";
+        const CONFIG_KEY = "SaverPro_Config_v2";
+
+        let currentCurrency = "PHP";
+        let currentFilter = "all";
+        let data = [];
+
+        const CURRENCIES = {
+            PHP: { symbol: "₱", locale: "en-PH" },
+            USD: { symbol: "$", locale: "en-US" },
+            EUR: { symbol: "€", locale: "de-DE" },
+            GBP: { symbol: "£", locale: "en-GB" },
+            INR: { symbol: "₹", locale: "en-IN" },
+            JPY: { symbol: "¥", locale: "ja-JP" },
+            CAD: { symbol: "C$", locale: "en-CA" },
+            AUD: { symbol: "A$", locale: "en-AU" },
+            BRL: { symbol: "R$", locale: "pt-BR" }
+        };
+
+        const QUOTES = [
+            '"Do not save what is left after spending, but spend what is left after saving." — Warren Buffett',
+            '"A penny saved is a penny earned." — Benjamin Franklin',
+            '"The habit of saving is itself an education." — George W. Lorimer',
+            '"Small amounts saved consistently create massive wealth over time."',
+            '"Financial freedom is freedom from fear."'
+        ];
+
+        function initApp() {
+            // Load saved config
+            const savedConfig = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+            currentCurrency = savedConfig.currency || "PHP";
+            document.getElementById('currencySelector').value = currentCurrency;
+
+            if (savedConfig.darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').textContent = '☀️';
+            }
+
+            // Load saved data
+            data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            if (!Array.isArray(data) || data.length !== 52) {
+                initializeDefaultData(100, 'linear');
+            }
+
+            updateCurrencySymbols();
+            renderWeeks();
+            updateStats();
+            rotateQuote();
+            setupServiceWorker();
+        }
+
+        function setupServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'savings-challenge-v2';
+                    self.addEventListener('install', (e) => {
+                        e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(['./'])));
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request).catch(() => caches.match('./'))));
+                    });
+                `;
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+            saveConfig();
+        }
+
+        function saveConfig() {
+            const config = {
+                currency: currentCurrency,
+                darkMode: document.documentElement.classList.contains('dark')
+            };
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        }
+
+        function changeCurrency(newCurrency) {
+            currentCurrency = newCurrency;
+            saveConfig();
+            updateCurrencySymbols();
+            renderWeeks();
+            updateStats();
+            playChime('click');
+        }
+
+        function updateCurrencySymbols() {
+            const symbol = CURRENCIES[currentCurrency]?.symbol || "₱";
+            document.querySelectorAll('.currencySymbol').forEach(el => el.textContent = symbol);
+        }
+
+        function rotateQuote() {
+            const randomIndex = Math.floor(Math.random() * QUOTES.length);
+            document.getElementById('quoteText').textContent = QUOTES[randomIndex];
+        }
+
+        function money(value) {
+            const curr = CURRENCIES[currentCurrency] || CURRENCIES.PHP;
+            return new Intl.NumberFormat(curr.locale, {
+                style: "currency",
+                currency: currentCurrency,
+                minimumFractionDigits: 2
+            }).format(value);
+        }
+
+        function initializeDefaultData(step = 100, strategy = 'linear') {
+            data = [];
+            for (let i = 1; i <= 52; i++) {
+                let amount = i * step;
+                if (strategy === 'flat') {
+                    amount = step;
+                } else if (strategy === 'reverse') {
+                    amount = (53 - i) * step;
+                }
+                data.push({
+                    week: i,
+                    amount: amount,
+                    saved: false,
+                    savedDate: null,
+                    note: ""
+                });
+            }
+            saveData();
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // -------------------------------------------------------------
+        // MODAL SYSTEM
+        // -------------------------------------------------------------
+        let modalCallback = null;
+
+        function showModal(title, message, isConfirm = false, callback = null, icon = "💡") {
+            document.getElementById('modalHeaderIcon').textContent = icon;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message;
+            document.getElementById('modalExtraContent').classList.add('hidden');
+            
+            const modal = document.getElementById('customModal');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                modal.firstElementChild.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+
+            if (isConfirm) {
+                cancelBtn.classList.remove('hidden');
+                confirmBtn.textContent = "Yes, Continue";
+            } else {
+                cancelBtn.classList.add('hidden');
+                confirmBtn.textContent = "Okay";
+            }
+
+            modalCallback = callback;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('customModal');
+            modal.firstElementChild.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalCallback = null;
+            }, 200);
+        }
+
+        function handleModalConfirm() {
+            if (modalCallback) modalCallback();
+            closeModal();
+        }
+
+        // -------------------------------------------------------------
+        // RENDER WEEKS GRID
+        // -------------------------------------------------------------
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'saved', 'pending'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    btn.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white dark:bg-slate-900 text-rose-500 shadow-sm";
+                } else {
+                    btn.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all";
+                }
+            });
+            renderWeeks();
+        }
+
+        function renderWeeks() {
+            const container = document.getElementById("weeks");
+            container.innerHTML = "";
+
+            const searchQuery = document.getElementById("searchInput")?.value.toLowerCase().trim() || "";
+            const symbol = CURRENCIES[currentCurrency]?.symbol || "₱";
+
+            data.forEach((item, index) => {
+                // Filter checks
+                if (currentFilter === 'saved' && !item.saved) return;
+                if (currentFilter === 'pending' && item.saved) return;
+
+                // Search check
+                if (searchQuery) {
+                    const matchesWeek = `week ${index + 1}`.includes(searchQuery) || `${index + 1}` === searchQuery;
+                    const matchesAmount = item.amount.toString().includes(searchQuery);
+                    if (!matchesWeek && !matchesAmount) return;
+                }
+
+                const week = document.createElement("div");
+                week.id = "week-" + index;
+                
+                let cardStyle = "glass-card rounded-3xl p-4 sm:p-5 text-center transition-all duration-300 border-2 flex flex-col items-center justify-between hover:-translate-y-1.5 shadow-md ";
+                if (item.saved) {
+                    cardStyle += "border-rose-400/80 bg-rose-50/60 dark:bg-rose-950/40 shadow-rose-500/10";
+                } else {
+                    cardStyle += "border-slate-200/80 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800";
+                }
+                week.className = cardStyle;
+
+                week.innerHTML = `
+                    <div class="flex items-center justify-between w-full mb-2">
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">W-${index + 1}</span>
+                        <button onclick="editNote(${index})" title="${item.note ? 'Edit Note' : 'Add Note'}" class="text-xs text-slate-400 hover:text-rose-500 transition-colors">
+                            ${item.note ? '📝' : '➕ Note'}
+                        </button>
+                    </div>
+
+                    <div class="text-3xl sm:text-4xl my-1 transition-transform duration-300 hover:scale-110">
+                        ${item.saved ? "💖" : "🤍"}
+                    </div>
+
+                    <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                        Week ${index + 1}
+                    </div>
+
+                    <div class="w-full relative mb-3">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs sm:text-sm">${symbol}</span>
+                        <input
+                            class="w-full py-2 pl-7 pr-2 border border-slate-200 dark:border-slate-700 rounded-xl text-center font-black text-slate-800 dark:text-slate-100 text-sm outline-none transition-all ${item.saved ? 'bg-rose-100/50 dark:bg-rose-900/30 border-rose-200' : 'bg-slate-50 dark:bg-slate-800 focus:border-rose-400'}"
+                            type="number"
+                            min="0"
+                            value="${item.amount}"
+                            onchange="changeAmount(${index}, this.value)"
+                            ${item.saved ? 'readonly' : ''}
+                        >
+                    </div>
+
+                    ${item.savedDate ? `<span class="text-[10px] text-rose-500 font-semibold mb-2 block">Done: ${item.savedDate}</span>` : ''}
+                    ${item.note ? `<p class="text-[11px] italic text-slate-500 dark:text-slate-400 line-clamp-1 mb-2 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md w-full">"${item.note}"</p>` : ''}
+
+                    <button
+                        class="w-full py-2.5 rounded-xl font-black text-xs tracking-wider transition-all active:scale-95 shadow-sm ${item.saved ? 'bg-rose-500 text-white shadow-rose-500/20 hover:bg-rose-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-rose-100 dark:hover:bg-rose-950 hover:text-rose-600'}"
+                        onclick="toggleSaved(${index})"
+                    >
+                        ${item.saved ? "✓ SAVED" : "MARK SAVED"}
+                    </button>
+                `;
+
+                container.appendChild(week);
+            });
+
+            updateStats();
+        }
+
+        function changeAmount(index, value) {
+            let val = parseFloat(value);
+            if (isNaN(val) || val < 0) val = 0;
+            data[index].amount = val;
+            saveData();
+            updateStats();
+        }
+
+        function toggleSaved(index) {
+            data[index].saved = !data[index].saved;
+            data[index].savedDate = data[index].saved ? new Date().toLocaleDateString() : null;
+            
+            if (data[index].saved) {
+                playChime('save');
+                triggerConfetti();
+            } else {
+                playChime('click');
+            }
+
+            saveData();
+            renderWeeks();
+        }
+
+        function editNote(index) {
+            const currentNote = data[index].note || "";
+            showModal(
+                `Week ${index + 1} Note`,
+                `Add a personal note for Week ${index + 1}:`,
+                true,
+                () => {
+                    const input = document.getElementById('modalNoteInput');
+                    if (input) {
+                        data[index].note = input.value.trim();
+                        saveData();
+                        renderWeeks();
+                    }
+                },
+                "📝"
+            );
+
+            // Inject input field into modal extra content
+            const extra = document.getElementById('modalExtraContent');
+            extra.classList.remove('hidden');
+            extra.innerHTML = `
+                <input id="modalNoteInput" type="text" value="${currentNote}" placeholder="e.g., Saved from salary bonus!" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-rose-400">
+            `;
+        }
+
+        function handleStrategyChange() {
+            const strategy = document.getElementById('strategyType').value;
+            const stepInput = document.getElementById('stepIncrement');
+            if (strategy === 'flat') {
+                stepInput.value = 500;
+            } else {
+                stepInput.value = 100;
+            }
+        }
+
+        function regenerateAmounts() {
+            const step = parseFloat(document.getElementById("stepIncrement").value) || 100;
+            const strategy = document.getElementById('strategyType').value;
+            const symbol = CURRENCIES[currentCurrency]?.symbol || "₱";
+
+            showModal(
+                "Recalculate Amounts?",
+                `Are you sure you want to update all 52 weeks using the <strong>${strategy.toUpperCase()}</strong> strategy with a <strong>${symbol}${step}</strong> step increment?<br><br><span class="text-xs text-slate-400">Note: Your saved checkmarks will be preserved.</span>`,
+                true,
+                () => {
+                    data.forEach((item, i) => {
+                        let amount = (i + 1) * step;
+                        if (strategy === 'flat') amount = step;
+                        if (strategy === 'reverse') amount = (53 - (i + 1)) * step;
+                        item.amount = amount;
+                    });
+                    saveData();
+                    renderWeeks();
+                    playChime('click');
+                },
+                "⚙️"
+            );
+        }
+
+        // -------------------------------------------------------------
+        // STATS & MILESTONES UPDATE
+        // -------------------------------------------------------------
+        function updateStats() {
+            let totalGoal = 0;
+            let totalSaved = 0;
+            let completed = 0;
+
+            data.forEach(item => {
+                totalGoal += Number(item.amount);
+                if (item.saved) {
+                    totalSaved += Number(item.amount);
+                    completed++;
+                }
+            });
+
+            const remaining = Math.max(0, totalGoal - totalSaved);
+            const percentage = totalGoal > 0 ? ((totalSaved / totalGoal) * 100) : 0;
+
+            const goalInput = document.getElementById("totalGoalInput");
+            if (goalInput && document.activeElement !== goalInput) {
+                goalInput.value = totalGoal.toFixed(2);
+            }
+
+            document.getElementById("totalSaved").textContent = money(totalSaved);
+            document.getElementById("totalRemaining").textContent = money(remaining);
+            document.getElementById("completed").textContent = `${completed} / 52`;
+            
+            const pctString = percentage.toFixed(1) + "%";
+            document.getElementById("percentage").textContent = pctString;
+            document.getElementById("progressBar").style.width = pctString;
+
+            renderMilestones(completed, percentage);
+
+            if (completed === 52 && totalGoal > 0) {
+                playChime('complete');
+            }
+        }
+
+        function promptEditGoal() {
+            const currentGoal = data.reduce((t, i) => t + Number(i.amount), 0);
+            const symbol = CURRENCIES[currentCurrency]?.symbol || "₱";
+            showModal(
+                "Set Total Target Goal",
+                `Enter your overall target savings goal (${symbol}):`,
+                true,
+                () => {
+                    const input = document.getElementById('modalGoalInput');
+                    if (input && input.value) {
+                        handleGoalChange(input.value);
+                    }
+                },
+                "🎯"
+            );
+
+            const extra = document.getElementById('modalExtraContent');
+            extra.classList.remove('hidden');
+            extra.innerHTML = `
+                <input id="modalGoalInput" type="number" min="1" step="100" value="${currentGoal.toFixed(2)}" class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-black text-center text-lg text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-400">
+            `;
+        }
+
+        function handleGoalChange(value) {
+            let targetGoal = parseFloat(value);
+            if (isNaN(targetGoal) || targetGoal <= 0) {
+                updateStats();
+                return;
+            }
+
+            const strategy = document.getElementById('strategyType')?.value || 'linear';
+            distributeGoal(targetGoal, strategy);
+        }
+
+        function distributeGoal(targetGoal, strategy) {
+            if (strategy === 'flat') {
+                const perWeek = Math.round((targetGoal / 52) * 100) / 100;
+                data.forEach(item => item.amount = perWeek);
+                const stepInput = document.getElementById('stepIncrement');
+                if (stepInput) stepInput.value = perWeek;
+            } else if (strategy === 'linear' || strategy === 'reverse') {
+                // Sum of 1..52 sequence is 1378
+                const step = Math.round((targetGoal / 1378) * 100) / 100;
+                data.forEach((item, i) => {
+                    const w = i + 1;
+                    item.amount = strategy === 'linear' ? Math.round(w * step) : Math.round((53 - w) * step);
+                });
+                const stepInput = document.getElementById('stepIncrement');
+                if (stepInput) stepInput.value = Math.round(step);
+            }
+            saveData();
+            renderWeeks();
+            playChime('save');
+        }
+
+        function renderMilestones(completed, percentage) {
+            const container = document.getElementById('milestonesContainer');
+            if (!container) return;
+
+            const milestones = [
+                { id: 'm1', label: 'First Step', icon: '🌱', req: completed >= 1 },
+                { id: 'm2', label: '25% Saved', icon: '🥉', req: percentage >= 25 },
+                { id: 'm3', label: 'Halfway Hero', icon: '🥈', req: percentage >= 50 },
+                { id: 'm4', label: '75% Master', icon: '🥇', req: percentage >= 75 },
+                { id: 'm5', label: 'Challenge Done', icon: '👑', req: completed === 52 }
+            ];
+
+            container.innerHTML = milestones.map(m => `
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${m.req ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white border-transparent shadow-md shadow-rose-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 opacity-60'}">
+                    <span>${m.icon}</span>
+                    <span>${m.label}</span>
+                </div>
+            `).join('');
+        }
+
+        // -------------------------------------------------------------
+        // RANDOM ENVELOPE DRAWING LOGIC
+        // -------------------------------------------------------------
+        function drawEnvelope() {
+            playChime('click');
+            const available = data.filter(item => !item.saved);
+            const result = document.getElementById("drawResult");
+            
+            result.classList.remove('hidden');
+            result.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                result.classList.remove('scale-95', 'opacity-0');
+                result.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            if (available.length === 0) {
+                result.innerHTML = `
+                    <div class="text-5xl mb-3">🎉</div>
+                    <h3 class="text-2xl font-black text-rose-500 mb-2">CONGRATULATIONS!</h3>
+                    <p class="text-slate-600 dark:text-slate-300 font-medium text-sm mb-4">You have saved for all 52 weeks!</p>
+                    <div class="bg-rose-50 dark:bg-rose-950/60 rounded-2xl p-4 inline-block">
+                        <span class="block text-xs font-bold text-rose-400 uppercase tracking-widest">Total Wealth Accumulated</span>
+                        <strong class="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">${money(data.reduce((t, i) => t + Number(i.amount), 0))}</strong>
+                    </div>
+                `;
+                triggerConfetti();
+                playChime('complete');
+                return;
+            }
+
+            const selected = available[Math.floor(Math.random() * available.length)];
+            const index = selected.week - 1;
+
+            const selectedCard = document.getElementById("week-" + index);
+            if (selectedCard) {
+                selectedCard.classList.add("animate-highlight");
+                selectedCard.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+
+            result.innerHTML = `
+                <div class="text-xs font-extrabold text-rose-400 uppercase tracking-widest mb-1">Envelope Drawn</div>
+                <div class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-4">WEEK ${selected.week}</div>
+                
+                <div class="bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-2xl p-5 mb-5">
+                    <span class="block text-xs font-bold text-slate-400 uppercase mb-1">Target Amount</span>
+                    <strong class="text-4xl sm:text-5xl font-black text-rose-500 dark:text-rose-400">${money(selected.amount)}</strong>
+                </div>
+
+                <button 
+                    class="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rose-500/20 hover:opacity-95 active:scale-95 transition-all text-sm flex items-center justify-center gap-2 mb-2"
+                    onclick="acceptDraw(${index})"
+                >
+                    ✓ Mark Week ${selected.week} as Saved
+                </button>
+                <button 
+                    class="w-full bg-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold py-2 text-xs transition-colors"
+                    onclick="closeDrawResult(${index})"
+                >
+                    Dismiss
+                </button>
+            `;
+        }
+
+        function acceptDraw(index) {
+            if (!data[index].saved) {
+                toggleSaved(index);
+            }
+            closeDrawResult(index);
+            showModal("Awesome Job!", `Week ${index + 1} saved successfully! Keep the savings streak going! 🔥`, false, null, "🚀");
+        }
+
+        function closeDrawResult(index) {
+            const result = document.getElementById('drawResult');
+            result.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => result.classList.add('hidden'), 300);
+
+            const card = document.getElementById('week-' + index);
+            if (card) card.classList.remove("animate-highlight");
+        }
+
+        // -------------------------------------------------------------
+        // DATA BACKUP, RESTORE & RESET
+        // -------------------------------------------------------------
+        function saveProgress() {
+            saveData();
+            playChime('save');
+            showModal("Saved Locally!", "Your progress has been updated and securely stored in your local browser storage.", false, null, "💾");
+        }
+
+        function exportData() {
+            const backupObj = {
+                version: "2.0",
+                currency: currentCurrency,
+                timestamp: new Date().toISOString(),
+                data: data
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `SaverPro_52Weeks_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(dl);
+            dl.click();
+            dl.remove();
+            playChime('click');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.readAsText(file, 'UTF-8');
+                reader.onload = evt => {
+                    try {
+                        const parsed = JSON.parse(evt.target.result);
+                        const importedData = parsed.data || parsed;
+
+                        if (Array.isArray(importedData) && importedData.length === 52) {
+                            data = importedData;
+                            if (parsed.currency) {
+                                currentCurrency = parsed.currency;
+                                document.getElementById('currencySelector').value = currentCurrency;
+                            }
+                            saveData();
+                            saveConfig();
+                            updateCurrencySymbols();
+                            renderWeeks();
+                            playChime('complete');
+                            showModal("Backup Restored!", "Your 52 weeks savings progress was loaded successfully!", false, null, "🎉");
+                        } else {
+                            showModal("Import Error", "Invalid format. File must contain exactly 52 weeks of data.", false, null, "⚠️");
+                        }
+                    } catch (err) {
+                        showModal("Import Error", "Failed to parse JSON file. Ensure the file is a valid backup.", false, null, "⚠️");
+                    }
+                };
+            };
+            input.click();
+        }
+
+        function resetChallenge() {
+            showModal(
+                "Reset Progress?",
+                "Are you sure you want to reset all 52 weeks? <strong>This will clear all saved checkmarks and custom notes.</strong>",
+                true,
+                () => {
+                    const step = parseFloat(document.getElementById("stepIncrement").value) || 100;
+                    const strategy = document.getElementById('strategyType').value;
+                    initializeDefaultData(step, strategy);
+                    renderWeeks();
+                    document.getElementById("drawResult").classList.add("hidden");
+                    playChime('click');
+                },
+                "🔄"
+            );
+        }
+
+        // Online/Offline Banner Handling
+        window.addEventListener('online', () => document.getElementById('offlineBanner').classList.add('hidden'));
+        window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.remove('hidden'));
+        if (!navigator.onLine) document.getElementById('offlineBanner').classList.remove('hidden');
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
